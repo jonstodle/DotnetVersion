@@ -24,6 +24,9 @@ namespace DotnetVersion
         
         [Option("--patch", Description = "Auto-increment patch version number")]
         public bool Patch { get; }
+        
+        [Option("-p|--project-file", Description = "Path to project file")]
+        public string ProjectFilePath { get; }
 
         private void OnExecute()
         {
@@ -42,7 +45,9 @@ namespace DotnetVersion
         {
             var currentDirectory = new DirectoryInfo(Directory.GetCurrentDirectory());
 
-            var projectFile = currentDirectory.EnumerateFiles("*.csproj").FirstOrDefault();
+            var projectFile = !string.IsNullOrWhiteSpace(ProjectFilePath)
+                ? new FileInfo(ProjectFilePath)
+                : currentDirectory.EnumerateFiles("*.csproj").FirstOrDefault();
             if (projectFile?.Exists == false)
                 throw new CliException(1, "Unable to find a project file.");
 
