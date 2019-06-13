@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Xml.Linq;
 using McMaster.Extensions.CommandLineUtils;
 
@@ -10,9 +12,10 @@ namespace DotnetVersion
 {
     class Program
     {
-        static void Main(string[] args) =>
+        private static void Main(string[] args) =>
             CommandLineApplication.Execute<Program>(args);
         
+        // ReSharper disable UnassignedGetOnlyAutoProperty
         [Option("--new-version", Description = "New version (must be SemVer compliant)")]
         public string NewVersion { get; }
         
@@ -27,6 +30,19 @@ namespace DotnetVersion
         
         [Option("-p|--project-file", Description = "Path to project file")]
         public string ProjectFilePath { get; }
+        
+        [Option("--no-git", Description = "Do not make any changes in git")]
+        public bool NoGit { get; }
+        
+        [Option("--message", Description = "git commit message")]
+        public string CommitMessage { get; }
+        
+        [Option("--no-git-tag", Description = "Do not generate a git tag")]
+        public bool NoGitTag { get; }
+        
+        [Option("--git-version-prefix", Description = "Prefix before version in git")]
+        public string GitVersionPrefix { get; }
+        // ReSharper restore UnassignedGetOnlyAutoProperty
 
         private void OnExecute()
         {
@@ -102,6 +118,31 @@ namespace DotnetVersion
                 versionElement.Value = newVersion;
             
             File.WriteAllText(projectFile.FullName, xDocument.ToString());
+
+            if (!NoGit)
+                try
+                {
+                    var tag = $"{GitVersionPrefix}{newVersion}";
+                    var message = !string.IsNullOrWhiteSpace(CommitMessage)
+                        ? CommitMessage
+                        : tag;
+                    Process.Start(new ProcessStartInfo("git", $"commit -am \"{message}\"")
+                    {
+                        RedirectStandardError = true,
+                        RedirectStandardOutput = true,
+                    })?.WaitForExit();
+                    if (!NoGitTag)
+                    {
+                        // Hack to make sure the wrong commit is tagged
+                        Thread.Sleep(200);
+                        Process.Start(new ProcessStartInfo("git", $"tag {tag}")
+                        {
+                            RedirectStandardError = true,
+                            RedirectStandardOutput = true,
+                        })?.WaitForExit();
+                    }
+                }
+                catch { /* Ignored */ }
             
             WriteLine($"Successfully set version to {newVersion}");
         }
