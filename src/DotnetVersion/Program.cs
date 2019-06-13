@@ -10,13 +10,14 @@ using static System.Console;
 
 namespace DotnetVersion
 {
+    [Command("dotnet-version", Description = "Update project version")]
     class Program
     {
         private static void Main(string[] args) =>
             CommandLineApplication.Execute<Program>(args);
         
         // ReSharper disable UnassignedGetOnlyAutoProperty
-        [Option("--new-version", Description = "New version (must be SemVer compliant)")]
+        [Option("--new-version", Description = "New version")]
         public string NewVersion { get; }
         
         [Option("--major", Description = "Auto-increment major version number")]
