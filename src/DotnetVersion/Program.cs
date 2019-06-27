@@ -17,6 +17,9 @@ namespace DotnetVersion
             CommandLineApplication.Execute<Program>(args);
 
         // ReSharper disable UnassignedGetOnlyAutoProperty
+        [Option("--show", Description = "Only show the current version number")]
+        public bool Show { get; }
+        
         [Option("--new-version", Description = "New version")]
         public string NewVersion { get; }
 
@@ -73,6 +76,9 @@ namespace DotnetVersion
             var currentVersion = ParseVersion(versionElement?.Value ?? "0.0.0");
             
             WriteLine($"Current version: {currentVersion}");
+            
+            if (Show)
+                return;
 
             SemVersion version = null;
 
