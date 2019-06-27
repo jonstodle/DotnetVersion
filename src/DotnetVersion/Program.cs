@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -174,7 +174,7 @@ namespace DotnetVersion
             }
             catch
             {
-                throw new CliException(1, $"Unable to parse version '{version}'");
+                throw new CliException(1, $"Unable to parse version '{version}'.");
             }
         }
     }
