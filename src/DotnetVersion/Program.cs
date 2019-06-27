@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -16,10 +16,14 @@ namespace DotnetVersion
         private static void Main(string[] args) =>
             CommandLineApplication.Execute<Program>(args);
 
+        private const string AlphaString = "alpha";
+        private const string BetaString = "beta";
+        private const string ReleaseCandidateString = "rc";
+
         // ReSharper disable UnassignedGetOnlyAutoProperty
         [Option("--show", Description = "Only show the current version number")]
         public bool Show { get; }
-        
+
         [Option("--new-version", Description = "New version")]
         public string NewVersion { get; }
 
@@ -31,6 +35,15 @@ namespace DotnetVersion
 
         [Option("--patch", Description = "Auto-increment patch version number")]
         public bool Patch { get; }
+
+        [Option("--alpha", Description = "Auto-increment alpha version number")]
+        public bool Alpha { get; }
+
+        [Option("--beta", Description = "Auto-increment beta version number")]
+        public bool Beta { get; }
+
+        [Option("--rc", Description = "Auto-increment release candidate version number")]
+        public bool ReleaseCandidate { get; }
 
         [Option("-p|--project-file", Description = "Path to project file")]
         public string ProjectFilePath { get; }
@@ -74,9 +87,9 @@ namespace DotnetVersion
             var xDocument = XDocument.Load(projectFile.OpenRead());
             var versionElement = xDocument.Root?.Descendants("Version").FirstOrDefault();
             var currentVersion = ParseVersion(versionElement?.Value ?? "0.0.0");
-            
+
             WriteLine($"Current version: {currentVersion}");
-            
+
             if (Show)
                 return;
 
@@ -89,10 +102,10 @@ namespace DotnetVersion
             else if (Major)
             {
                 version = currentVersion.Change(
-                    currentVersion.Major + 1, 
-                    0, 
-                    0, 
-                    "", 
+                    currentVersion.Major + 1,
+                    0,
+                    0,
+                    "",
                     "");
             }
             else if (Minor)
@@ -100,15 +113,41 @@ namespace DotnetVersion
                 version = currentVersion.Change(
                     minor: currentVersion.Minor + 1,
                     patch: 0,
-                    build: "",
-                    prerelease: "");
+                    prerelease: "",
+                    build: "");
             }
             else if (Patch)
             {
                 version = currentVersion.Change(
                     patch: currentVersion.Patch + 1,
-                    build: "",
-                    prerelease: "");
+                    prerelease: "",
+                    build: "");
+            }
+            else if (ReleaseCandidate)
+            {
+                version = currentVersion.Change(
+                    prerelease: CreatePreReleaseString(ReleaseCandidateString, currentVersion.Prerelease),
+                    build: "");
+            }
+            else if (Beta)
+            {
+                if (currentVersion.Prerelease.StartsWith(ReleaseCandidateString, StringComparison.OrdinalIgnoreCase))
+                    throw new CliException(1, "Can't increment beta version number of a release candidate version number.");
+
+                version = currentVersion.Change(
+                    prerelease: CreatePreReleaseString(BetaString, currentVersion.Prerelease),
+                    build: "");
+            }
+            else if (Alpha)
+            {
+                if (currentVersion.Prerelease.StartsWith(ReleaseCandidateString, StringComparison.OrdinalIgnoreCase))
+                    throw new CliException(1, "Can't increment alpha version number of a release candidate version number.");
+                if (currentVersion.Prerelease.StartsWith(BetaString, StringComparison.OrdinalIgnoreCase))
+                    throw new CliException(1, "Can't increment alpha version number of a beta version number.");
+
+                version = currentVersion.Change(
+                    prerelease: CreatePreReleaseString(AlphaString, currentVersion.Prerelease),
+                    build: "");
             }
 
             if (version is null)
@@ -176,6 +215,17 @@ namespace DotnetVersion
             {
                 throw new CliException(1, $"Unable to parse version '{version}'.");
             }
+        }
+
+        private string CreatePreReleaseString(string preReleaseName, string preReleaseVersion)
+        {
+                var version = 0;
+                if (preReleaseVersion.StartsWith(preReleaseName, StringComparison.OrdinalIgnoreCase))
+                    int.TryParse(
+                        preReleaseVersion.Substring(preReleaseName.Length),
+                        out version);
+
+                return $"{preReleaseName}{version + 1}";
         }
     }
 }
