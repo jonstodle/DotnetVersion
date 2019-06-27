@@ -71,8 +71,10 @@ namespace DotnetVersion
             var xDocument = XDocument.Load(projectFile.OpenRead());
             var versionElement = xDocument.Root?.Descendants("Version").FirstOrDefault();
             var currentVersion = ParseVersion(versionElement?.Value ?? "0.0.0");
+            
+            WriteLine($"Current version: {currentVersion}");
 
-            var version = currentVersion;
+            SemVersion version = null;
 
             if (!string.IsNullOrWhiteSpace(NewVersion))
             {
@@ -80,8 +82,8 @@ namespace DotnetVersion
             }
             else if (Major)
             {
-                version = version.Change(
-                    version.Major + 1, 
+                version = currentVersion.Change(
+                    currentVersion.Major + 1, 
                     0, 
                     0, 
                     "", 
@@ -89,27 +91,27 @@ namespace DotnetVersion
             }
             else if (Minor)
             {
-                version = version.Change(
-                    minor: version.Minor + 1,
+                version = currentVersion.Change(
+                    minor: currentVersion.Minor + 1,
                     patch: 0,
                     build: "",
                     prerelease: "");
             }
             else if (Patch)
             {
-                version = version.Change(
-                    patch: version.Patch + 1,
+                version = currentVersion.Change(
+                    patch: currentVersion.Patch + 1,
                     build: "",
                     prerelease: "");
             }
-            else
+
+            if (version is null)
             {
-                var inputVersion = Prompt.GetString("Version number:");
+                var inputVersion = Prompt.GetString("New version:");
                 version = ParseVersion(inputVersion);
             }
-
-            WriteLine($"Current version: {currentVersion}");
-            WriteLine($"New version: {version}");
+            else
+                WriteLine($"New version: {version}");
 
             if (versionElement is null)
             {
