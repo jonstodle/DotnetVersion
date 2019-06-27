@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
 using McMaster.Extensions.CommandLineUtils;
-
+using Semver;
 using static System.Console;
 
 namespace DotnetVersion
@@ -15,32 +15,32 @@ namespace DotnetVersion
     {
         private static void Main(string[] args) =>
             CommandLineApplication.Execute<Program>(args);
-        
+
         // ReSharper disable UnassignedGetOnlyAutoProperty
         [Option("--new-version", Description = "New version")]
         public string NewVersion { get; }
-        
+
         [Option("--major", Description = "Auto-increment major version number")]
         public bool Major { get; }
-        
+
         [Option("--minor", Description = "Auto-increment minor version number")]
         public bool Minor { get; }
-        
+
         [Option("--patch", Description = "Auto-increment patch version number")]
         public bool Patch { get; }
-        
+
         [Option("-p|--project-file", Description = "Path to project file")]
         public string ProjectFilePath { get; }
-        
+
         [Option("--no-git", Description = "Do not make any changes in git")]
         public bool NoGit { get; }
-        
+
         [Option("--message", Description = "git commit message")]
         public string CommitMessage { get; }
-        
+
         [Option("--no-git-tag", Description = "Do not generate a git tag")]
         public bool NoGitTag { get; }
-        
+
         [Option("--git-version-prefix", Description = "Prefix before version in git")]
         public string GitVersionPrefix { get; }
         // ReSharper restore UnassignedGetOnlyAutoProperty
@@ -70,49 +70,46 @@ namespace DotnetVersion
 
             var xDocument = XDocument.Load(projectFile.OpenRead());
             var versionElement = xDocument.Root?.Descendants("Version").FirstOrDefault();
-            var currentVersion = versionElement?.Value ?? "0.0.0";
+            var currentVersion = ParseVersion(versionElement?.Value ?? "0.0.0");
 
-            var (major, minor, patch, meta) = ParseVersion(currentVersion);
+            var version = currentVersion;
 
             if (!string.IsNullOrWhiteSpace(NewVersion))
             {
-                (major, minor, patch, meta) = ParseVersion(NewVersion);
+                version = ParseVersion(NewVersion);
             }
             else if (Major)
             {
-                major++;
-                minor = 0;
-                patch = 0;
-                meta = "";
+                version = version.Change(
+                    version.Major + 1, 
+                    0, 
+                    0, 
+                    "", 
+                    "");
             }
             else if (Minor)
             {
-                minor++;
-                patch = 0;
-                meta = "";
+                version = version.Change(
+                    minor: version.Minor + 1,
+                    patch: 0,
+                    build: "",
+                    prerelease: "");
             }
             else if (Patch)
             {
-                if (string.IsNullOrWhiteSpace(meta))
-                    patch++;
-                meta = "";
+                version = version.Change(
+                    patch: version.Patch + 1,
+                    build: "",
+                    prerelease: "");
             }
             else
             {
-                var version = Prompt.GetString("Version number:");
-                (major, minor, patch, meta) = ParseVersion(version);
+                var inputVersion = Prompt.GetString("Version number:");
+                version = ParseVersion(inputVersion);
             }
 
-            var newVersion = string.Join(
-                ".",
-                major,
-                minor,
-                !string.IsNullOrWhiteSpace(meta)
-                    ? $"{patch}-{meta}"
-                    : patch.ToString());
-            
             WriteLine($"Current version: {currentVersion}");
-            WriteLine($"New version: {newVersion}");
+            WriteLine($"New version: {version}");
 
             if (versionElement is null)
             {
@@ -122,18 +119,18 @@ namespace DotnetVersion
                     propertyGroupElement = new XElement("PropertyGroup");
                     xDocument.Root?.Add(propertyGroupElement);
                 }
-                
-                propertyGroupElement.Add(new XElement("Version", newVersion));
+
+                propertyGroupElement.Add(new XElement("Version", version));
             }
             else
-                versionElement.Value = newVersion;
-            
+                versionElement.Value = version.ToString();
+
             File.WriteAllText(projectFile.FullName, xDocument.ToString());
 
             if (!NoGit)
                 try
                 {
-                    var tag = $"{GitVersionPrefix}{newVersion}";
+                    var tag = $"{GitVersionPrefix}{version}";
                     var message = !string.IsNullOrWhiteSpace(CommitMessage)
                         ? CommitMessage
                         : tag;
@@ -153,42 +150,24 @@ namespace DotnetVersion
                         })?.WaitForExit();
                     }
                 }
-                catch { /* Ignored */ }
-            
-            WriteLine($"Successfully set version to {newVersion}");
+                catch
+                {
+                    /* Ignored */
+                }
+
+            WriteLine($"Successfully set version to {version}");
         }
 
-        private (int major, int minor, int patch, string meta) ParseVersion(string version)
+        private SemVersion ParseVersion(string version)
         {
-            if (string.IsNullOrWhiteSpace(version))
-                throw new CliException(1, "Version string can not be empty.");
-
-            var versionValues = version.Split('.');
-            if (versionValues.Length == 0)
-                throw new CliException(1, "Version must have at least one (1) value.");
-
-            var major = 0;
-            var minor = 0;
-            var patch = 0;
-            var meta = "";
-
-            if (versionValues.Length > 0)
-                if (!int.TryParse(versionValues[0], out major))
-                    throw new CliException(1, "Major version number could not be parsed.");
-            if (versionValues.Length > 1)
-                if (!int.TryParse(versionValues[1], out minor))
-                    throw new CliException(1, "Minor version number could not be parsed.");
-            if (versionValues.Length > 2)
+            try
             {
-                var patchValues = versionValues[2].Split('-');
-                
-                if (!int.TryParse(patchValues[0], out patch))
-                    throw new CliException(1, "Patch version number could not be parsed.");
-                if (patchValues.Length > 1)
-                    meta = patchValues[1];
+                return SemVersion.Parse(version);
             }
-
-            return (major, minor, patch, meta);
+            catch
+            {
+                throw new CliException(1, $"Unable to parse version '{version}'");
+            }
         }
     }
 }
