@@ -81,8 +81,9 @@ namespace DotnetVersion
             var projectFile = !string.IsNullOrWhiteSpace(ProjectFilePath)
                 ? new FileInfo(ProjectFilePath)
                 : currentDirectory.EnumerateFiles("*.csproj").FirstOrDefault();
-            if (projectFile?.Exists == false)
-                throw new CliException(1, "Unable to find a project file.");
+            if (projectFile is null ||
+                projectFile.Exists == false)
+                throw new CliException(1, $"Unable to find a project file in directory '{currentDirectory}'.");
 
             var xDocument = XDocument.Load(projectFile.OpenRead());
             var versionElement = xDocument.Root?.Descendants("Version").FirstOrDefault();
