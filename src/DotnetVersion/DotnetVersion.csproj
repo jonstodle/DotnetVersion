@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <PackageId>DotnetVersion</PackageId>
     <Authors>jon-indico</Authors>
     <Company>Indico Systems AS</Company>
