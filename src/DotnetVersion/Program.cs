@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -101,55 +101,70 @@ namespace DotnetVersion
             {
                 version = ParseVersion(NewVersion);
             }
-            else if (Major)
+            else
             {
-                version = currentVersion.Change(
-                    currentVersion.Major + 1,
-                    0,
-                    0,
-                    "",
-                    "");
-            }
-            else if (Minor)
-            {
-                version = currentVersion.Change(
-                    minor: currentVersion.Minor + 1,
-                    patch: 0,
-                    prerelease: "",
-                    build: "");
-            }
-            else if (Patch)
-            {
-                version = currentVersion.Change(
-                    patch: currentVersion.Patch + 1,
-                    prerelease: "",
-                    build: "");
-            }
-            else if (ReleaseCandidate)
-            {
-                version = currentVersion.Change(
-                    prerelease: CreatePreReleaseString(ReleaseCandidateString, currentVersion.Prerelease),
-                    build: "");
-            }
-            else if (Beta)
-            {
-                if (currentVersion.Prerelease.StartsWith(ReleaseCandidateString, StringComparison.OrdinalIgnoreCase))
-                    throw new CliException(1, "Can't increment beta version number of a release candidate version number.");
+                if (Major)
+                {
+                    version = currentVersion.Change(
+                        currentVersion.Major + 1,
+                        0,
+                        0,
+                        "",
+                        "");
+                }
+                else if (Minor)
+                {
+                    version = currentVersion.Change(
+                        minor: currentVersion.Minor + 1,
+                        patch: 0,
+                        prerelease: "",
+                        build: "");
+                }
+                else if (Patch)
+                {
+                    version = currentVersion.Change(
+                        patch: currentVersion.Patch + 1,
+                        prerelease: "",
+                        build: "");
+                }
 
-                version = currentVersion.Change(
-                    prerelease: CreatePreReleaseString(BetaString, currentVersion.Prerelease),
-                    build: "");
-            }
-            else if (Alpha)
-            {
-                if (currentVersion.Prerelease.StartsWith(ReleaseCandidateString, StringComparison.OrdinalIgnoreCase))
-                    throw new CliException(1, "Can't increment alpha version number of a release candidate version number.");
-                if (currentVersion.Prerelease.StartsWith(BetaString, StringComparison.OrdinalIgnoreCase))
-                    throw new CliException(1, "Can't increment alpha version number of a beta version number.");
+                if (ReleaseCandidate)
+                {
+                    version = (version ?? currentVersion).Change(
+                        prerelease: CreatePreReleaseString(
+                            ReleaseCandidateString,
+                            version is null ? currentVersion.Prerelease : ""),
+                        build: "");
+                }
+                else if (Beta)
+                {
+                    if (version is null &&
+                        currentVersion.Prerelease.StartsWith(ReleaseCandidateString,
+                            StringComparison.OrdinalIgnoreCase))
+                        throw new CliException(1,
+                            "Can't increment beta version number of a release candidate version number.");
 
-                version = currentVersion.Change(
-                    prerelease: CreatePreReleaseString(AlphaString, currentVersion.Prerelease),
-                    build: "");
+                    version = (version ?? currentVersion).Change(
+                        prerelease: CreatePreReleaseString(BetaString,
+                            version is null ? currentVersion.Prerelease : ""),
+                        build: "");
+                }
+                else if (Alpha)
+                {
+                    if (version is null &&
+                        currentVersion.Prerelease.StartsWith(ReleaseCandidateString,
+                            StringComparison.OrdinalIgnoreCase))
+                        throw new CliException(1,
+                            "Can't increment alpha version number of a release candidate version number.");
+                    if (version is null &&
+                        currentVersion.Prerelease.StartsWith(BetaString, StringComparison.OrdinalIgnoreCase))
+                        throw new CliException(1, "Can't increment alpha version number of a beta version number.");
+
+                    version = (version ?? currentVersion).Change(
+                        prerelease: CreatePreReleaseString(AlphaString,
+                            version is null ? currentVersion.Prerelease : ""),
+                        build: "");
+                }
             }
 
             if (version is null)
@@ -221,13 +236,13 @@ namespace DotnetVersion
 
         private string CreatePreReleaseString(string preReleaseName, string preReleaseVersion)
         {
-                var version = 0;
-                if (preReleaseVersion.StartsWith(preReleaseName, StringComparison.OrdinalIgnoreCase))
-                    int.TryParse(
-                        preReleaseVersion.Substring(preReleaseName.Length),
-                        out version);
+            var version = 0;
+            if (preReleaseVersion.StartsWith(preReleaseName, StringComparison.OrdinalIgnoreCase))
+                int.TryParse(
+                    preReleaseVersion.Substring(preReleaseName.Length),
+                    out version);
 
-                return $"{preReleaseName}{version + 1}";
+            return $"{preReleaseName}{version + 1}";
         }
     }
 }
