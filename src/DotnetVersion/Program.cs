@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -61,6 +61,7 @@ namespace DotnetVersion
         public string GitVersionPrefix { get; }
         // ReSharper restore UnassignedGetOnlyAutoProperty
 
+        // ReSharper disable once UnusedMember.Local
         private void OnExecute()
         {
             try
