@@ -21,6 +21,9 @@ namespace DotnetVersion
         private const string ReleaseCandidateString = "rc";
 
         // ReSharper disable UnassignedGetOnlyAutoProperty
+        [Option("-V|--version", Description = "Show version of the tool")]
+        public bool ShowVersion { get; }
+
         [Option("--show", Description = "Only show the current version number")]
         public bool Show { get; }
 
@@ -77,6 +80,18 @@ namespace DotnetVersion
 
         private void Run()
         {
+            if (ShowVersion)
+            {
+                ;
+                if (SemVersion.TryParse(
+                    FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location).ProductVersion,
+                    out var toolVersion))
+                    WriteLine(toolVersion);
+                else
+                    WriteLine(typeof(Program).Assembly.GetName().Version.ToString(3));
+                return;
+            }
+
             var currentDirectory = new DirectoryInfo(Directory.GetCurrentDirectory());
 
             var projectFile = !string.IsNullOrWhiteSpace(ProjectFilePath)
