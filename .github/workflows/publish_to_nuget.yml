@@ -1,0 +1,25 @@
+name: Publish to Nuget
+
+on:
+  push:
+    branches:
+      - refs/tags/*
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v1
+      
+      - name: Install .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 2.2.401
+      
+      - name: Build and publish
+        run: |
+          dotnet pack -o output src/DotnetVersion/DotnetVersion.csproj
+          dotnet nuget push src/DotnetVersion/output/ -s https://nuget.org -k ${NUGET_API_KEY}
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
