@@ -82,7 +82,6 @@ namespace DotnetVersion
         {
             if (ShowVersion)
             {
-                ;
                 if (SemVersion.TryParse(
                     FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location).ProductVersion,
                     out var toolVersion))
