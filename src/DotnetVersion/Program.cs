@@ -257,7 +257,7 @@ namespace DotnetVersion
                     preReleaseVersion.Substring(preReleaseName.Length),
                     out version);
 
-            return $"{preReleaseName}{version + 1}";
+            return $"{preReleaseName}.{version + 1}";
         }
     }
 }
