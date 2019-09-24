@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Xml.Linq;
 using McMaster.Extensions.CommandLineUtils;
@@ -252,9 +253,13 @@ namespace DotnetVersion
         {
             var version = 0;
             if (preReleaseVersion.StartsWith(preReleaseName, StringComparison.OrdinalIgnoreCase))
-                int.TryParse(
-                    preReleaseVersion.Substring(preReleaseName.Length),
-                    out version);
+            {
+                var versionString = String.Join("", preReleaseVersion
+                    .Reverse()
+                    .TakeWhile(char.IsDigit)
+                    .Reverse());
+                int.TryParse(versionString, out version);
+            }
 
             return $"{preReleaseName}.{version + 1}";
         }
