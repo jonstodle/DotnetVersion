@@ -207,32 +207,42 @@ namespace DotnetVersion
             File.WriteAllText(projectFile.FullName, xDocument.ToString());
 
             if (!NoGit)
-                try
+            {
+                if (string.IsNullOrWhiteSpace(ProjectFilePath))
                 {
-                    var tag = $"{GitVersionPrefix}{version}";
-                    var message = !string.IsNullOrWhiteSpace(CommitMessage)
-                        ? CommitMessage
-                        : tag;
-                    Process.Start(new ProcessStartInfo("git", $"commit -am \"{message}\"")
+                    try
                     {
-                        RedirectStandardError = true,
-                        RedirectStandardOutput = true,
-                    })?.WaitForExit();
-                    if (!NoGitTag)
-                    {
-                        // Hack to make sure the wrong commit is tagged
-                        Thread.Sleep(200);
-                        Process.Start(new ProcessStartInfo("git", $"tag {tag}")
+                        var tag = $"{GitVersionPrefix}{version}";
+                        var message = !string.IsNullOrWhiteSpace(CommitMessage)
+                            ? CommitMessage
+                            : tag;
+                        Process.Start(new ProcessStartInfo("git", $"commit -am \"{message}\"")
                         {
                             RedirectStandardError = true,
                             RedirectStandardOutput = true,
                         })?.WaitForExit();
+                        if (!NoGitTag)
+                        {
+                            // Hack to make sure the wrong commit is tagged
+                            Thread.Sleep(200);
+                            Process.Start(new ProcessStartInfo("git", $"tag {tag}")
+                            {
+                                RedirectStandardError = true,
+                                RedirectStandardOutput = true,
+                            })?.WaitForExit();
+                        }
+                    }
+                    catch
+                    {
+                        /* Ignored */
                     }
                 }
-                catch
+                else
                 {
-                    /* Ignored */
+                    WriteLine(
+                        "Not running git integration when project file has been specified, to prevent running git in wrong directory.");
                 }
+            }
 
             WriteLine($"Successfully set version to {version}");
         }
