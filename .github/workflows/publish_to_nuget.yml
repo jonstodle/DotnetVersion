@@ -2,8 +2,8 @@ name: Publish to Nuget
 
 on:
   push:
-    branches:
-      - refs/tags/*
+    tags:
+      - v*
       
 jobs:
   build:
