@@ -96,11 +96,14 @@ namespace DotnetVersion
             var projectFile = !string.IsNullOrWhiteSpace(ProjectFilePath)
                 ? new FileInfo(ProjectFilePath)
                 : currentDirectory.EnumerateFiles("*.csproj").FirstOrDefault();
+
             if (projectFile is null ||
                 projectFile.Exists == false)
                 throw new CliException(1, $"Unable to find a project file in directory '{currentDirectory}'.");
 
-            var xDocument = XDocument.Load(projectFile.OpenRead());
+            var projectFileFullName = projectFile.FullName;
+
+            var xDocument = XDocument.Load(projectFileFullName);
             var versionElement = xDocument.Root?.Descendants("Version").FirstOrDefault();
             var currentVersion = ParseVersion(versionElement?.Value ?? "0.0.0");
 
@@ -170,6 +173,7 @@ namespace DotnetVersion
                             StringComparison.OrdinalIgnoreCase))
                         throw new CliException(1,
                             "Can't increment alpha version number of a release candidate version number.");
+
                     if (version is null &&
                         currentVersion.Prerelease.StartsWith(BetaString, StringComparison.OrdinalIgnoreCase))
                         throw new CliException(1, "Can't increment alpha version number of a beta version number.");
@@ -187,7 +191,9 @@ namespace DotnetVersion
                 version = ParseVersion(inputVersion);
             }
             else
+            {
                 WriteLine($"New version: {version}");
+            }
 
             if (versionElement is null)
             {
@@ -201,9 +207,11 @@ namespace DotnetVersion
                 propertyGroupElement.Add(new XElement("Version", version));
             }
             else
+            {
                 versionElement.Value = version.ToString();
+            }
 
-            File.WriteAllText(projectFile.FullName, xDocument.ToString());
+            File.WriteAllText(projectFileFullName, xDocument.ToString());
 
             if (!NoGit)
             {
@@ -215,11 +223,13 @@ namespace DotnetVersion
                         var message = !string.IsNullOrWhiteSpace(CommitMessage)
                             ? CommitMessage
                             : tag;
+
                         Process.Start(new ProcessStartInfo("git", $"commit -am \"{message}\"")
                         {
                             RedirectStandardError = true,
                             RedirectStandardOutput = true,
                         })?.WaitForExit();
+
                         if (!NoGitTag)
                         {
                             // Hack to make sure the wrong commit is tagged
