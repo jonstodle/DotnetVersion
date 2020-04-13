@@ -48,6 +48,9 @@ namespace DotnetVersion
         [Option("--rc", Description = "Auto-increment release candidate version number")]
         public bool ReleaseCandidate { get; }
 
+        [Option("--final", Description = "Remove prerelease version number")]
+        public bool Final { get; }
+
         [Option("-p|--project-file", Description = "Path to project file")]
         public string ProjectFilePath { get; }
 
@@ -145,8 +148,17 @@ namespace DotnetVersion
                         build: "");
                 }
 
+                if (Final)
+                {
+                    version = (version ?? currentVersion).Change(
+                        prerelease: string.Empty);
+                }
+
                 if (ReleaseCandidate)
                 {
+                    if (Final)
+                        throw new CliException(1, "Can't increment release candidate number of the final version.");
+
                     version = (version ?? currentVersion).Change(
                         prerelease: CreatePreReleaseString(
                             ReleaseCandidateString,
@@ -155,6 +167,9 @@ namespace DotnetVersion
                 }
                 else if (Beta)
                 {
+                    if (Final)
+                        throw new CliException(1, "Can't increment beta number of the final version.");
+
                     if (version is null &&
                         currentVersion.Prerelease.StartsWith(ReleaseCandidateString,
                             StringComparison.OrdinalIgnoreCase))
@@ -168,6 +183,9 @@ namespace DotnetVersion
                 }
                 else if (Alpha)
                 {
+                    if (Final)
+                        throw new CliException(1, "Can't increment alpha number of the final version.");
+
                     if (version is null &&
                         currentVersion.Prerelease.StartsWith(ReleaseCandidateString,
                             StringComparison.OrdinalIgnoreCase))
