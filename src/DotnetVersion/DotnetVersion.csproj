@@ -4,12 +4,10 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Version>1.5.0</Version>
     <PackageId>DotnetVersion</PackageId>
-    <Authors>jon-indico</Authors>
-    <Company>Indico Systems AS</Company>
+    <Authors>jonstodle</Authors>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>dotnet-version</ToolCommandName>
     <Description>Update project version, through an easy API.</Description>
-    <Copyright>Indico Systems AS</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>version;git;semver</PackageTags>
     <RepositoryUrl>https://github.com/Jon-Indico/DotnetVersion</RepositoryUrl>
