@@ -11,9 +11,9 @@ using static System.Console;
 namespace DotnetVersion
 {
     [Command("dotnet-version", Description = "Update project version")]
-    class Program
+    public class Program
     {
-        private static void Main(string[] args) =>
+        public static void Main(string[] args) =>
             CommandLineApplication.Execute<Program>(args);
 
         private const string AlphaString = "alpha";
