@@ -83,10 +83,16 @@ Update project version
 Usage: dotnet-version [options]
 
 Options:
+  -V|--version          Show version of the tool
+  --show                Only show the current version number
   --new-version         New version
   --major               Auto-increment major version number
   --minor               Auto-increment minor version number
   --patch               Auto-increment patch version number
+  --alpha               Auto-increment alpha version number
+  --beta                Auto-increment beta version number
+  --rc                  Auto-increment release candidate version number
+  --final               Remove prerelease version number
   -p|--project-file     Path to project file
   --no-git              Do not make any changes in git
   --message             git commit message
