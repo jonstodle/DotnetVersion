@@ -10,7 +10,7 @@
     <Description>Update project version, through an easy API.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>version;git;semver</PackageTags>
-    <RepositoryUrl>https://github.com/Jon-Indico/DotnetVersion</RepositoryUrl>
+    <RepositoryUrl>https://github.com/jonstodle/DotnetVersion</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.3.4" />
